@@ -1605,7 +1605,7 @@ class Peer(Logger, EventListener):
         # if we are forwarding a trampoline payment, add trampoline onion
         if trampoline_onion:
             self.logger.info(f'adding trampoline onion to final payload')
-            trampoline_payload = hops_data[num_hops-2].payload
+            trampoline_payload = hops_data[-1].payload
             trampoline_payload["trampoline_onion_packet"] = {
                 "version": trampoline_onion.version,
                 "public_key": trampoline_onion.public_key,
@@ -2007,7 +2007,7 @@ class Peer(Logger, EventListener):
                 invoice_features=invoice_features,
                 fwd_trampoline_onion=next_trampoline_onion,
                 budget=budget,
-                attempts=1,
+                attempts=100,
                 fw_payment_key=fw_payment_key,
             )
         except OnionRoutingFailure as e:
@@ -2016,7 +2016,7 @@ class Peer(Logger, EventListener):
             self.logger.debug(
                 f"maybe_forward_trampoline. PaymentFailure for {payment_hash.hex()=}, {payment_secret.hex()=}: {e!r}")
             # FIXME: adapt the error code
-            raise OnionRoutingFailure(code=OnionFailureCode.UNKNOWN_NEXT_PEER, data=b'')
+            raise OnionRoutingFailure(code=OnionFailureCode.TRAMPOLINE_FEE_INSUFFICIENT, data=b'')
 
     def _maybe_refuse_to_forward_htlc_that_corresponds_to_payreq_we_created(self, payment_hash: bytes) -> bool:
         """Returns True if the HTLC should be failed.
